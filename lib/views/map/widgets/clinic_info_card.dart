@@ -54,7 +54,8 @@ class ClinicInfoCard extends StatelessWidget {
                   icon: const Icon(Icons.navigation),
                   label: const Text('導航'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white, 
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
@@ -65,6 +66,7 @@ class ClinicInfoCard extends StatelessWidget {
                   label: const Text('通話'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
