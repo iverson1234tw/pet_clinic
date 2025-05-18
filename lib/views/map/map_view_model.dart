@@ -1,8 +1,11 @@
 // lib/views/map/map_view_model.dart
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 import '../../models/clinic_model.dart';
 import '../../repository/clinic_repository.dart';
@@ -23,16 +26,20 @@ class MapViewModel extends ChangeNotifier {
   Clinic? _selectedClinic;
   Clinic? get selectedClinic => _selectedClinic;
 
-  /// 對外提供標記清單
+  /// 自訂大頭針 BitmapDescriptor（初始化後會指派）
+  BitmapDescriptor? _customMarker;
+
+  /// 對外提供標記清單（不可修改）
   List<Marker> get clinicMarkers => List.unmodifiable(_clinicMarkers);
 
-  /// 初始化：取得定位並載入診所資料
+  /// 初始化流程：抓定位 → 載入大頭針圖示 → 載入診所資料
   Future<void> initialize() async {
     await getCurrentLocation();
-    await loadClinics();
+    await _loadCustomMarkerIcon(); // 載入自訂大頭針圖片
+    await loadClinics(); // 載入診所資料並繪製大頭針
   }
 
-  /// 取得使用者定位
+  /// 取得使用者當前定位座標
   Future<void> getCurrentLocation() async {
     try {
       LocationPermission permission = await Geolocator.requestPermission();
@@ -43,13 +50,32 @@ class MapViewModel extends ChangeNotifier {
       _currentLocation = LatLng(position.latitude, position.longitude);
       notifyListeners();
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ 取得定位失敗：$e");
-      }
+      debugPrint("❌ 取得定位失敗：$e");
     }
   }
 
-  /// 載入診所並建立大頭針
+  /// 載入並縮放自訂的大頭針圖片（圖片來源 assets/images/map_dot_dog.png）
+  Future<void> _loadCustomMarkerIcon() async {
+    try {
+      final ByteData data = await rootBundle.load('assets/images/map_dot_dog.png');
+
+      final codec = await ui.instantiateImageCodec(
+        data.buffer.asUint8List(),
+        targetWidth: 80, // ✅ 調整寬度
+        targetHeight: 80, // ✅ 調整高度
+      );
+
+      final frame = await codec.getNextFrame();
+      final imageData = await frame.image.toByteData(format: ui.ImageByteFormat.png);
+
+      final Uint8List resizedBytes = imageData!.buffer.asUint8List();
+      _customMarker = BitmapDescriptor.fromBytes(resizedBytes);
+    } catch (e) {
+      debugPrint("❌ 載入自訂大頭針圖片失敗：$e");
+    }
+  }
+
+  /// 載入診所並建立 marker 標記（使用自訂 icon）
   Future<void> loadClinics() async {
     try {
       final List<Clinic> clinics = await _repository.fetchClinics();
@@ -60,15 +86,13 @@ class MapViewModel extends ChangeNotifier {
         final lat = clinic.lat;
         final lng = clinic.lng;
 
-        // 忽略無效座標
         if (lat != null && lng != null) {
           final marker = Marker(
             markerId: MarkerId(clinic.name),
             position: LatLng(lat, lng),
-            infoWindow: InfoWindow.noText, // 我們自製 info 卡片，不使用預設
-            onTap: () {
-              selectClinic(clinic);
-            },
+            icon: _customMarker ?? BitmapDescriptor.defaultMarker, // 使用自訂大頭針圖示
+            infoWindow: InfoWindow.noText, // 禁用預設 infoWindow
+            onTap: () => selectClinic(clinic), // 點擊大頭針時選中診所
           );
           _clinicMarkers.add(marker);
         }
@@ -76,19 +100,17 @@ class MapViewModel extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ 載入診所資料失敗：$e");
-      }
+      debugPrint("❌ 載入診所資料失敗：$e");
     }
   }
 
-  /// 設定被選中的診所（點 marker 時）
+  /// 設定被點選的診所資料（用於下方展示卡片）
   void selectClinic(Clinic clinic) {
     _selectedClinic = clinic;
     notifyListeners();
   }
 
-  /// 清除被選中的診所（可用於點地圖其他區域）
+  /// 清除被選中的診所（用於關閉 info 卡片）
   void clearSelectedClinic() {
     _selectedClinic = null;
     notifyListeners();
