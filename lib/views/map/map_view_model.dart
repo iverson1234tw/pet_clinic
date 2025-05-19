@@ -32,11 +32,20 @@ class MapViewModel extends ChangeNotifier {
   /// 對外提供標記清單（不可修改）
   List<Marker> get clinicMarkers => List.unmodifiable(_clinicMarkers);
 
+  /// 是否正在載入（用於顯示遮罩）
+  bool isLoading = false;
+
   /// 初始化流程：抓定位 → 載入大頭針圖示 → 載入診所資料
   Future<void> initialize() async {
+    isLoading = true;
+    notifyListeners();
+
     await getCurrentLocation();
-    await _loadCustomMarkerIcon(); // 載入自訂大頭針圖片
-    await loadClinics(); // 載入診所資料並繪製大頭針
+    await _loadCustomMarkerIcon();
+    await loadClinics();
+
+    isLoading = false;
+    notifyListeners();
   }
 
   /// 取得使用者當前定位座標
@@ -61,8 +70,8 @@ class MapViewModel extends ChangeNotifier {
 
       final codec = await ui.instantiateImageCodec(
         data.buffer.asUint8List(),
-        targetWidth: 80, // ✅ 調整寬度
-        targetHeight: 80, // ✅ 調整高度
+        targetWidth: 80,
+        targetHeight: 80,
       );
 
       final frame = await codec.getNextFrame();
@@ -90,15 +99,13 @@ class MapViewModel extends ChangeNotifier {
           final marker = Marker(
             markerId: MarkerId(clinic.name),
             position: LatLng(lat, lng),
-            icon: _customMarker ?? BitmapDescriptor.defaultMarker, // 使用自訂大頭針圖示
-            infoWindow: InfoWindow.noText, // 禁用預設 infoWindow
-            onTap: () => selectClinic(clinic), // 點擊大頭針時選中診所
+            icon: _customMarker ?? BitmapDescriptor.defaultMarker,
+            infoWindow: InfoWindow.noText,
+            onTap: () => selectClinic(clinic),
           );
           _clinicMarkers.add(marker);
         }
       }
-
-      notifyListeners();
     } catch (e) {
       debugPrint("❌ 載入診所資料失敗：$e");
     }

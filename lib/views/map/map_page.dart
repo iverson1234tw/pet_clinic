@@ -20,7 +20,11 @@ class MapPage extends StatelessWidget {
           final currentLocation = vm.currentLocation;
 
           if (currentLocation == null) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Colors.orange, // 初始載入用橘色轉圈
+              ),
+            );
           }
 
           return Stack(
@@ -37,10 +41,9 @@ class MapPage extends StatelessWidget {
                 onMapCreated: (controller) {
                   vm.mapController = controller;
                 },
-                onTap: (_) => vm.clearSelectedClinic(), // 點地圖其他處可清除選擇
+                onTap: (_) => vm.clearSelectedClinic(),
               ),
 
-              // 底部卡片區塊
               Align(
                 alignment: Alignment.bottomCenter,
                 child: AnimatedSwitcher(
@@ -61,6 +64,17 @@ class MapPage extends StatelessWidget {
                         ),
                 ),
               ),
+
+              // 淡黑遮罩 + 橘色 loading 轉圈
+              if (vm.isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.2),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.orangeAccent,
+                    ),
+                  ),
+                ),
             ],
           );
         },
