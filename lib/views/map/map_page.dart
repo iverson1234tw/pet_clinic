@@ -14,11 +14,13 @@ class MapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MapViewModel>(
-      create: (_) => MapViewModel()..initialize(), // ✅ 自動初始化，只執行一次
+      // ✅ 建立 ViewModel 並初始化（只跑一次）
+      create: (_) => MapViewModel()..initialize(),
       child: Consumer<MapViewModel>(
         builder: (context, vm, _) {
           final currentLocation = vm.currentLocation;
 
+          // ✅ 還沒取得定位，顯示轉圈圈
           if (currentLocation == null) {
             return const Center(
               child: CircularProgressIndicator(
@@ -29,6 +31,7 @@ class MapPage extends StatelessWidget {
 
           return Stack(
             children: [
+              // ✅ 顯示 Google Map，使用診所 marker 清單
               GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: currentLocation,
@@ -41,9 +44,10 @@ class MapPage extends StatelessWidget {
                 onMapCreated: (controller) {
                   vm.mapController = controller;
                 },
-                onTap: (_) => vm.clearSelectedClinic(),
+                onTap: (_) => vm.clearSelectedClinic(), // ✅ 點空白清除選擇
               ),
 
+              // ✅ 下方診所資訊卡片區塊
               Align(
                 alignment: Alignment.bottomCenter,
                 child: AnimatedSwitcher(
@@ -65,7 +69,7 @@ class MapPage extends StatelessWidget {
                 ),
               ),
 
-              // 淡黑遮罩 + 橘色 loading 轉圈
+              // ✅ 載入遮罩：淡黑背景 + 橘色轉圈圈
               if (vm.isLoading)
                 Container(
                   color: Colors.black.withOpacity(0.2),

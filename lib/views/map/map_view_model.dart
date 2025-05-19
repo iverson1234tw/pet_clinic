@@ -16,8 +16,6 @@ class MapViewModel extends ChangeNotifier {
 
   late GoogleMapController mapController;
 
-  final List<Marker> _clinicMarkers = [];
-
   /// 是否已初始化過（避免重複載入資料）
   bool _initialized = false;
 
@@ -29,16 +27,36 @@ class MapViewModel extends ChangeNotifier {
   Clinic? _selectedClinic;
   Clinic? get selectedClinic => _selectedClinic;
 
-  /// 自訂大頭針 BitmapDescriptor（初始化後會指派）
-  BitmapDescriptor? _customMarker;
-
-  /// 對外提供標記清單（不可修改）
-  List<Marker> get clinicMarkers => List.unmodifiable(_clinicMarkers);
-
   /// 是否正在載入（用於顯示遮罩）
   bool isLoading = false;
 
-  /// 初始化流程：抓定位 → 載入大頭針圖示 → 載入診所資料（僅執行一次）
+  /// 自訂大頭針 BitmapDescriptor（預設與選中）
+  BitmapDescriptor? _customMarker;
+  BitmapDescriptor? _customMarkerSelected;
+
+  /// 當前被選中的診所名稱（用來切換 marker 圖）
+  String? _selectedMarkerId;
+
+  /// 診所資料快取（只載入一次）
+  List<Clinic> _cachedClinics = [];
+
+  /// Marker 清單：根據是否選中動態建立（不重建整個 list）
+  List<Marker> get clinicMarkers {
+    return _cachedClinics.map((clinic) {
+      final isSelected = _selectedMarkerId == clinic.name;
+      return Marker(
+        markerId: MarkerId(clinic.name),
+        position: LatLng(clinic.lat, clinic.lng),
+        icon: isSelected
+            ? (_customMarkerSelected ?? BitmapDescriptor.defaultMarker)
+            : (_customMarker ?? BitmapDescriptor.defaultMarker),
+        infoWindow: InfoWindow.noText,
+        onTap: () => selectClinic(clinic),
+      );
+    }).toList();
+  }
+
+  /// 初始化流程：抓定位 → 載入圖示 → 載入診所（只執行一次）
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
@@ -47,7 +65,7 @@ class MapViewModel extends ChangeNotifier {
     notifyListeners();
 
     await getCurrentLocation();
-    await _loadCustomMarkerIcon();
+    await _loadCustomMarkerIcons();
     await loadClinics();
 
     isLoading = false;
@@ -69,63 +87,45 @@ class MapViewModel extends ChangeNotifier {
     }
   }
 
-  /// 載入並縮放自訂的大頭針圖片（圖片來源 assets/images/map_dot_dog.png）
-  Future<void> _loadCustomMarkerIcon() async {
-    try {
-      final ByteData data = await rootBundle.load('assets/images/map_dot_dog.png');
-
-      final codec = await ui.instantiateImageCodec(
-        data.buffer.asUint8List(),
-        targetWidth: 80,
-        targetHeight: 80,
-      );
-
-      final frame = await codec.getNextFrame();
-      final imageData = await frame.image.toByteData(format: ui.ImageByteFormat.png);
-
-      final Uint8List resizedBytes = imageData!.buffer.asUint8List();
-      _customMarker = BitmapDescriptor.fromBytes(resizedBytes);
-    } catch (e) {
-      debugPrint("❌ 載入自訂大頭針圖片失敗：$e");
-    }
+  /// 載入兩張 marker 圖片（預設與選中用）
+  Future<void> _loadCustomMarkerIcons() async {
+    _customMarker = await _loadMarkerImage('assets/images/map_dot_dog.png');
+    _customMarkerSelected = await _loadMarkerImage('assets/images/map_dot_dog_selected.png');
   }
 
-  /// 載入診所並建立 marker 標記（使用自訂 icon）
+  /// 將圖片轉成 BitmapDescriptor
+  Future<BitmapDescriptor> _loadMarkerImage(String assetPath) async {
+    final ByteData data = await rootBundle.load(assetPath);
+    final codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: 80,
+      targetHeight: 80,
+    );
+    final frame = await codec.getNextFrame();
+    final imageData = await frame.image.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.fromBytes(imageData!.buffer.asUint8List());
+  }
+
+  /// 載入診所資料（只跑一次，存快取）
   Future<void> loadClinics() async {
     try {
-      final List<Clinic> clinics = await _repository.fetchClinics();
-
-      _clinicMarkers.clear();
-
-      for (final clinic in clinics) {
-        final lat = clinic.lat;
-        final lng = clinic.lng;
-
-        if (lat != null && lng != null) {
-          final marker = Marker(
-            markerId: MarkerId(clinic.name),
-            position: LatLng(lat, lng),
-            icon: _customMarker ?? BitmapDescriptor.defaultMarker,
-            infoWindow: InfoWindow.noText,
-            onTap: () => selectClinic(clinic),
-          );
-          _clinicMarkers.add(marker);
-        }
-      }
+      _cachedClinics = await _repository.fetchClinics();
     } catch (e) {
       debugPrint("❌ 載入診所資料失敗：$e");
     }
   }
 
-  /// 設定被點選的診所資料（用於下方展示卡片）
+  /// 設定被點選的診所資料（更新選中狀態 + 通知 UI）
   void selectClinic(Clinic clinic) {
     _selectedClinic = clinic;
-    notifyListeners();
+    _selectedMarkerId = clinic.name;
+    notifyListeners(); // ✅ 不重建 marker，只更新狀態
   }
 
   /// 清除被選中的診所（用於關閉 info 卡片）
   void clearSelectedClinic() {
     _selectedClinic = null;
-    notifyListeners();
+    _selectedMarkerId = null;
+    notifyListeners(); // ✅ 回復所有 marker 樣式
   }
 }

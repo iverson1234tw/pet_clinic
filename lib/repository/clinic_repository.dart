@@ -1,5 +1,3 @@
-// repository/clinic_repository.dart
-
 import '../api/clinic_api_service.dart';
 import '../models/clinic_model.dart';
 
@@ -8,12 +6,18 @@ import '../models/clinic_model.dart';
 class ClinicRepository {
   final ClinicApiService _apiService = ClinicApiService();
 
+  List<Clinic> _cachedClinics = []; // ✅ 加入快取清單
+
+  /// 外部取得快取診所資料（只讀）
+  List<Clinic> get cachedClinics => _cachedClinics;
+
   /// 取得所有診所資料
   Future<List<Clinic>> fetchClinics() async {
     try {
-      return await _apiService.fetchClinics();
+      _cachedClinics = await _apiService.fetchClinics(); // ✅ 儲存快取
+      return _cachedClinics;
     } catch (e) {
-      rethrow; // 可以考慮 log 或轉成自定義錯誤
+      rethrow;
     }
   }
 }
