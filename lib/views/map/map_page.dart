@@ -15,24 +15,22 @@ class MapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MapViewModel>(
-      // ✅ 建立 ViewModel 並初始化（只跑一次）
       create: (_) => MapViewModel()..initialize(),
       child: Consumer<MapViewModel>(
         builder: (context, vm, _) {
           final currentLocation = vm.currentLocation;
 
-          // ✅ 還沒取得定位，顯示轉圈圈
           if (currentLocation == null) {
             return const Center(
               child: CircularProgressIndicator(
-                color: Colors.orange, // 初始載入用橘色轉圈
+                color: Colors.orange,
               ),
             );
           }
 
           return Stack(
             children: [
-              // ✅ 顯示 Google Map，使用診所 marker 清單
+              // ✅ Google Map
               GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: currentLocation,
@@ -45,10 +43,10 @@ class MapPage extends StatelessWidget {
                 onMapCreated: (controller) {
                   vm.mapController = controller;
                 },
-                onTap: (_) => vm.clearSelectedClinic(), // ✅ 點空白清除選擇
+                onTap: (_) => vm.clearSelectedClinic(),
               ),
 
-              // ✅ 下方診所資訊卡片區塊
+              // ✅ 診所資訊卡片
               Align(
                 alignment: Alignment.bottomCenter,
                 child: AnimatedSwitcher(
@@ -61,18 +59,15 @@ class MapPage extends StatelessWidget {
                           address: vm.selectedClinic!.address,
                           phone: vm.selectedClinic!.phone,
                           onNavigate: () {
-                            // TODO: 導航功能
-                            _launchGoogleMapsNavigation(vm.selectedClinic!); // ✅ 導航
+                            _launchGoogleMapsNavigation(vm.selectedClinic!);
                           },
                           onCall: () {
-                            // TODO: 撥打電話
-                            _launchPhoneCall(vm.selectedClinic!.phone); // ✅ 撥打電話
+                            _launchPhoneCall(vm.selectedClinic!.phone);
                           },
                         ),
                 ),
               ),
-
-              // ✅ 載入遮罩：淡黑背景 + 橘色轉圈圈
+                            // ✅ 載入遮罩：淡黑背景 + 橘色轉圈圈
               if (vm.isLoading)
                 Container(
                   color: Colors.black.withOpacity(0.2),
@@ -82,6 +77,7 @@ class MapPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
             ],
           );
         },
@@ -89,7 +85,7 @@ class MapPage extends StatelessWidget {
     );
   }
 
-  /// ✅ 打開 Google Maps 導航
+  /// ✅ 導航
   void _launchGoogleMapsNavigation(Clinic clinic) async {
     final uri = Uri.parse(
       'https://www.google.com/maps/dir/?api=1&destination=${clinic.lat},${clinic.lng}&travelmode=driving',
@@ -110,5 +106,4 @@ class MapPage extends StatelessWidget {
       debugPrint('❌ 無法撥打電話');
     }
   }
-
 }
