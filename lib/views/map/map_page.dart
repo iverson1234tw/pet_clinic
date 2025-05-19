@@ -14,7 +14,7 @@ class MapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MapViewModel>(
-      create: (_) => MapViewModel()..initialize(),
+      create: (_) => MapViewModel()..initialize(), // ✅ 自動初始化，只執行一次
       child: Consumer<MapViewModel>(
         builder: (context, vm, _) {
           final currentLocation = vm.currentLocation;

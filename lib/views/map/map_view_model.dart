@@ -18,6 +18,9 @@ class MapViewModel extends ChangeNotifier {
 
   final List<Marker> _clinicMarkers = [];
 
+  /// 是否已初始化過（避免重複載入資料）
+  bool _initialized = false;
+
   /// 使用者目前位置
   LatLng? _currentLocation;
   LatLng? get currentLocation => _currentLocation;
@@ -35,8 +38,11 @@ class MapViewModel extends ChangeNotifier {
   /// 是否正在載入（用於顯示遮罩）
   bool isLoading = false;
 
-  /// 初始化流程：抓定位 → 載入大頭針圖示 → 載入診所資料
+  /// 初始化流程：抓定位 → 載入大頭針圖示 → 載入診所資料（僅執行一次）
   Future<void> initialize() async {
+    if (_initialized) return;
+    _initialized = true;
+
     isLoading = true;
     notifyListeners();
 

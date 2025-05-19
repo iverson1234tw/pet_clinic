@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'views/map/map_page.dart';
 import 'views/clinic/clinic_list_page.dart';
 import 'views/member/member_page.dart';
+import 'views/map/map_view_model.dart';
 
 void main() => runApp(const PetClinicApp());
 
@@ -10,12 +13,15 @@ class PetClinicApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Pet Clinic App',
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
+    return ChangeNotifierProvider<MapViewModel>(
+      create: (_) => MapViewModel(), // ✅ 提供 ViewModel，整個 app 只建一次
+      child: MaterialApp(
+        title: 'Pet Clinic App',
+        theme: ThemeData(
+          primarySwatch: Colors.teal,
+        ),
+        home: const MainPage(),
       ),
-      home: const MainPage(),
     );
   }
 }
@@ -30,8 +36,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    MapPage(),
+  final List<Widget> _pages = const [
+    MapPage(),         // ✅ 改為 const，可保留狀態
     ClinicListPage(),
     MemberPage(),
   ];
@@ -55,12 +61,17 @@ class _MainPageState extends State<MainPage> {
         ),
         centerTitle: true,
       ),
-      body: _pages[_selectedIndex],
+
+      // ✅ 使用 IndexedStack 保留頁面狀態
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: [
-          // 地圖頁：使用自訂圖片
           BottomNavigationBarItem(
             icon: Image.asset(
               'assets/images/map_tab_icon.png',
@@ -74,7 +85,6 @@ class _MainPageState extends State<MainPage> {
             ),
             label: '地圖',
           ),
-          // 清單頁：預設 Icon
           BottomNavigationBarItem(
             icon: Image.asset(
               'assets/images/list_tab_icon.png',
@@ -88,7 +98,6 @@ class _MainPageState extends State<MainPage> {
             ),
             label: '清單',
           ),
-          // 會員頁：預設 Icon
           BottomNavigationBarItem(
             icon: Image.asset(
               'assets/images/member_tab_icon.png',
