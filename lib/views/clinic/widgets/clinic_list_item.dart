@@ -46,17 +46,17 @@ class ClinicListItem extends StatelessWidget {
               const SizedBox(height: 4),
               Text('電話：${clinic.phone}'),
               const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  border: Border.all(color: statusColor, width: 1.2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-              ),
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              //   decoration: BoxDecoration(
+              //     border: Border.all(color: statusColor, width: 1.2),
+              //     borderRadius: BorderRadius.circular(4),
+              //   ),
+              //   child: Text(
+              //     statusText,
+              //     style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w500),
+              //   ),
+              // ),
             ],
           ),
           trailing: Row(

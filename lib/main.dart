@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 
 import 'views/map/map_page.dart';
@@ -6,7 +7,11 @@ import 'views/clinic/clinic_list_page.dart';
 import 'views/member/member_page.dart';
 import 'views/map/map_view_model.dart';
 
-void main() => runApp(const PetClinicApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await MobileAds.instance.initialize();
+  runApp(const PetClinicApp());
+}
 
 class PetClinicApp extends StatelessWidget {
   const PetClinicApp({super.key});
@@ -14,7 +19,7 @@ class PetClinicApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MapViewModel>(
-      create: (_) => MapViewModel(), // ✅ 提供 ViewModel，整個 app 只建一次
+      create: (_) => MapViewModel(),
       child: MaterialApp(
         title: 'Pet Clinic App',
         theme: ThemeData(
@@ -35,12 +40,51 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
+  late BannerAd _bannerAd;
+  bool _isBannerAdReady = false;
 
   final List<Widget> _pages = const [
-    MapPage(),         // ✅ 改為 const，可保留狀態
+    MapPage(),
     ClinicListPage(),
     MemberPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _bannerAd = BannerAd(
+      adUnitId: bool.fromEnvironment('dart.vm.product')
+          ? 'ca-app-pub-7071828845077001/4854442637' // ✅ 正式 ID
+          : getBannerAdUnitId(),                    // 🧪 測試 ID
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) => setState(() => _isBannerAdReady = true),
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('❌ 廣告載入失敗: $error');
+          ad.dispose();
+        },
+      ),
+    );
+
+    _bannerAd.load();
+  }
+
+  String getBannerAdUnitId() {
+    if (bool.fromEnvironment('dart.vm.product')) {
+      // ⚠️ Release 模式才回傳正式廣告 ID
+      return 'ca-app-pub-7071828845077001/4854442637';
+    } else {
+      return 'ca-app-pub-3940256099942544/6300978111';
+    }
+  }
+
+  @override
+  void dispose() {
+    _bannerAd.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -50,6 +94,8 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool showBanner = _selectedIndex == 0 && _isBannerAdReady;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -61,56 +107,41 @@ class _MainPageState extends State<MainPage> {
         ),
         centerTitle: true,
       ),
-
-      // ✅ 使用 IndexedStack 保留頁面狀態
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      body: Column(
+        children: [
+          if (showBanner)
+            Container(
+              width: _bannerAd.size.width.toDouble(),
+              height: _bannerAd.size.height.toDouble(),
+              child: AdWidget(ad: _bannerAd),
+            ),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _pages,
+            ),
+          ),
+        ],
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: [
           BottomNavigationBarItem(
-            icon: Image.asset(
-              'assets/images/map_tab_icon.png',
-              width: 40,
-              height: 40,
-            ),
-            activeIcon: Image.asset(
-              'assets/images/map_tab_selected_icon.png',
-              width: 46,
-              height: 46,
-            ),
+            icon: Image.asset('assets/images/map_tab_icon.png', width: 40, height: 40),
+            activeIcon: Image.asset('assets/images/map_tab_selected_icon.png', width: 46, height: 46),
             label: '地圖',
           ),
           BottomNavigationBarItem(
-            icon: Image.asset(
-              'assets/images/list_tab_icon.png',
-              width: 30,
-              height: 30,
-            ),
-            activeIcon: Image.asset(
-              'assets/images/list_tab_selected_icon.png',
-              width: 36,
-              height: 36,
-            ),
+            icon: Image.asset('assets/images/list_tab_icon.png', width: 30, height: 30),
+            activeIcon: Image.asset('assets/images/list_tab_selected_icon.png', width: 36, height: 36),
             label: '清單',
           ),
-          BottomNavigationBarItem(
-            icon: Image.asset(
-              'assets/images/member_tab_icon.png',
-              width: 30,
-              height: 30,
-            ),
-            activeIcon: Image.asset(
-              'assets/images/member_tab_selected_icon.png',
-              width: 36,
-              height: 36,
-            ),
-            label: '會員',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Image.asset('assets/images/member_tab_icon.png', width: 30, height: 30),
+          //   activeIcon: Image.asset('assets/images/member_tab_selected_icon.png', width: 36, height: 36),
+          //   label: '會員',
+          // ),
         ],
       ),
     );
