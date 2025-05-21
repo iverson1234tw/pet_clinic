@@ -6,7 +6,7 @@ class FavePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text('這裡是會員中心'),
+      child: Text('收藏'),
     );
   }
 }

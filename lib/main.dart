@@ -46,7 +46,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = const [
     MapPage(),
     ClinicListPage(),
-    MemberPage(),
+    FavePage(),
   ];
 
   @override
@@ -103,7 +103,7 @@ class _MainPageState extends State<MainPage> {
               ? '附近的寵物醫院'
               : _selectedIndex == 1
                   ? '寵物醫療清單'
-                  : '會員中心',
+                  : '毛孩健康收藏',
         ),
         centerTitle: true,
       ),
@@ -136,6 +136,11 @@ class _MainPageState extends State<MainPage> {
             icon: Image.asset('assets/images/list_tab_icon.png', width: 30, height: 30),
             activeIcon: Image.asset('assets/images/list_tab_selected_icon.png', width: 36, height: 36),
             label: '清單',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset('assets/images/like_tab_icon.png', width: 40, height: 40),
+            activeIcon: Image.asset('assets/images/like_tab_selected_icon.png', width: 36, height: 36),
+            label: '收藏',
           ),
           // BottomNavigationBarItem(
           //   icon: Image.asset('assets/images/member_tab_icon.png', width: 30, height: 30),
