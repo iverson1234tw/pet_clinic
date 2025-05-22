@@ -6,10 +6,14 @@ import 'views/map/map_page.dart';
 import 'views/clinic/clinic_list_page.dart';
 import 'views/member/member_page.dart';
 import 'views/map/map_view_model.dart';
+import 'package:pet_clinic_app/services/favorite_clinic_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // ✅ 廣告功能初始化
   await MobileAds.instance.initialize();
+  // ✅ 加入收藏功能初始化
+  await FavoriteClinicManager().initialize();
   runApp(const PetClinicApp());
 }
 

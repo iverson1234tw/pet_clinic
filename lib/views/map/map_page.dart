@@ -6,6 +6,7 @@ import 'package:pet_clinic_app/models/clinic_model.dart';
 import 'widgets/clinic_info_card.dart'; // 匯入你寫好的卡片元件
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // ✅ 插頁廣告用
+import 'package:pet_clinic_app/services/favorite_clinic_manager.dart'; // 儲存最愛
 
 /// 地圖主畫面：整合 Google Map 並由 ViewModel 提供診所座標資料與定位邏輯
 class MapPage extends StatefulWidget {
@@ -118,6 +119,13 @@ class _MapPageState extends State<MapPage> {
                           },
                           onCall: () {
                             _launchPhoneCall(vm.selectedClinic!.phone);
+                          },
+                          // ✅ 新增：傳入是否已收藏
+                          isFavorited: FavoriteClinicManager().isFavorited(vm.selectedClinic!),
+                          // ✅ 新增：按下愛心時切換收藏狀態並重建畫面
+                          onFavorite: () async {
+                            await FavoriteClinicManager().toggle(vm.selectedClinic!);
+                            setState(() {}); // 重新渲染愛心圖示
                           },
                         ),
                 ),
