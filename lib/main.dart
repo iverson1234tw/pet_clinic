@@ -7,13 +7,14 @@ import 'views/clinic/clinic_list_page.dart';
 import 'views/member/member_page.dart';
 import 'views/map/map_view_model.dart';
 import 'package:pet_clinic_app/services/favorite_clinic_manager.dart';
+import 'package:pet_clinic_app/views/fave/fave_page.dart';
+import 'package:pet_clinic_app/repository/clinic_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // ✅ 廣告功能初始化
-  await MobileAds.instance.initialize();
-  // ✅ 加入收藏功能初始化
-  await FavoriteClinicManager().initialize();
+  await MobileAds.instance.initialize(); // ✅ 廣告功能初始化
+  await FavoriteClinicManager().initialize(); // ✅ 收藏功能初始化  
+  await ClinicRepository().fetchClinics(); // ✅ 💥 加這一行：初始化診所清單，只做一次
   runApp(const PetClinicApp());
 }
 
@@ -26,9 +27,7 @@ class PetClinicApp extends StatelessWidget {
       create: (_) => MapViewModel(),
       child: MaterialApp(
         title: 'Pet Clinic App',
-        theme: ThemeData(
-          primarySwatch: Colors.teal,
-        ),
+        theme: ThemeData(primarySwatch: Colors.teal),
         home: const MainPage(),
       ),
     );
@@ -47,10 +46,14 @@ class _MainPageState extends State<MainPage> {
   late BannerAd _bannerAd;
   bool _isBannerAdReady = false;
 
-  final List<Widget> _pages = const [
-    MapPage(),
-    ClinicListPage(),
-    FavePage(),
+  // ✅ 收藏頁 GlobalKey，用來呼叫 refresh()
+  final GlobalKey<FavePageState> _favePageKey = GlobalKey<FavePageState>();
+
+  // ✅ 保留頁面並可透過 key 呼叫內部狀態
+  late final List<Widget> _pages = [
+    const MapPage(),
+    const ClinicListPage(),
+    FavePage(key: _favePageKey),
   ];
 
   @override
@@ -59,8 +62,8 @@ class _MainPageState extends State<MainPage> {
 
     _bannerAd = BannerAd(
       adUnitId: bool.fromEnvironment('dart.vm.product')
-          ? 'ca-app-pub-7071828845077001/4854442637' // ✅ 正式 ID
-          : getBannerAdUnitId(),                    // 🧪 測試 ID
+          ? 'ca-app-pub-7071828845077001/4854442637'
+          : getBannerAdUnitId(), // 🧪 測試 ID
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -76,12 +79,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   String getBannerAdUnitId() {
-    if (bool.fromEnvironment('dart.vm.product')) {
-      // ⚠️ Release 模式才回傳正式廣告 ID
-      return 'ca-app-pub-7071828845077001/4854442637';
-    } else {
-      return 'ca-app-pub-3940256099942544/6300978111';
-    }
+    return 'ca-app-pub-3940256099942544/6300978111'; // 測試橫幅 ID
   }
 
   @override
@@ -93,6 +91,11 @@ class _MainPageState extends State<MainPage> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+
+      // ✅ 每次切換到收藏頁就刷新
+      if (index == 2) {
+        _favePageKey.currentState?.refresh();
+      }
     });
   }
 
@@ -146,11 +149,6 @@ class _MainPageState extends State<MainPage> {
             activeIcon: Image.asset('assets/images/like_tab_selected_icon.png', width: 36, height: 36),
             label: '收藏',
           ),
-          // BottomNavigationBarItem(
-          //   icon: Image.asset('assets/images/member_tab_icon.png', width: 30, height: 30),
-          //   activeIcon: Image.asset('assets/images/member_tab_selected_icon.png', width: 36, height: 36),
-          //   label: '會員',
-          // ),
         ],
       ),
     );

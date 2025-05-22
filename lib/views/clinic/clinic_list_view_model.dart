@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// ViewModel 負責處理清單頁診所資料、搜尋邏輯與撥號/導航行為
 class ClinicListViewModel extends ChangeNotifier {
-  final ClinicRepository _repository = ClinicRepository();
+  final _repository = ClinicRepository(); // ✅ 單例使用
 
   List<Clinic> _allClinics = [];
   List<Clinic> _filteredClinics = [];

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class FavePage extends StatelessWidget {
-  const FavePage({super.key});
+class MemberPage extends StatelessWidget {
+  const MemberPage({super.key});
 
   @override
   Widget build(BuildContext context) {

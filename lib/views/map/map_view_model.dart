@@ -12,7 +12,7 @@ import '../../repository/clinic_repository.dart';
 
 /// ViewModel 負責處理地圖顯示的診所資料、標記與狀態邏輯
 class MapViewModel extends ChangeNotifier {
-  final ClinicRepository _repository = ClinicRepository();
+  final _repository = ClinicRepository(); // ✅ 單例使用
 
   late GoogleMapController mapController;
 

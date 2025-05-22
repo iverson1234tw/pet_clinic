@@ -26,6 +26,10 @@ class FavoriteClinicManager {
     return _favoriteKeys.contains(_generateKey(clinic));
   }
 
+  Future<void> toggleFavorite(Clinic clinic) async {
+    await toggle(clinic);
+  }
+
   /// ✅ 加入收藏
   Future<void> add(Clinic clinic) async {
     _favoriteKeys.add(_generateKey(clinic));
