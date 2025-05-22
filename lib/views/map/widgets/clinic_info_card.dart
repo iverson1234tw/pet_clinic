@@ -7,6 +7,10 @@ class ClinicInfoCard extends StatelessWidget {
   final VoidCallback onNavigate;
   final VoidCallback onCall;
 
+  /// ✅ 可選：愛心按下行為（你可傳 null 或加收藏邏輯）
+  final VoidCallback? onFavorite;
+  final bool isFavorited;
+
   const ClinicInfoCard({
     super.key,
     required this.name,
@@ -14,6 +18,8 @@ class ClinicInfoCard extends StatelessWidget {
     required this.phone,
     required this.onNavigate,
     required this.onCall,
+    this.onFavorite,
+    this.isFavorited = false,
   });
 
   @override
@@ -26,26 +32,55 @@ class ClinicInfoCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                )),
+            // ✅ 第一行：標題 + 愛心按鈕
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // ✅ 標題
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                // ✅ 愛心按鈕
+                GestureDetector(
+                  onTap: onFavorite,
+                  child: Icon(
+                    isFavorited ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorited ? Colors.red : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
-            Text(address,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
-                )),
+
+            // ✅ 地址
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                address,
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+            ),
             const SizedBox(height: 4),
-            Text('電話：$phone',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                )),
+
+            // ✅ 電話
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '電話：$phone',
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+            ),
             const SizedBox(height: 12),
+
+            // ✅ 導航與通話按鈕
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -55,9 +90,8 @@ class ClinicInfoCard extends StatelessWidget {
                   label: const Text('導航'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white, 
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -67,12 +101,11 @@ class ClinicInfoCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
